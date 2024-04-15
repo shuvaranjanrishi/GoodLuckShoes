@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">GoodLuckShoes</string>
+    <string name="create_date">তৈরীর তারিখ</string>
+    <string name="income_date">আয়ের তারিখ</string>
+    <string name="edition">সম্পাদন</string>
+    <string name="today_accounts">আজকের হিসাব</string>
+</resources>
