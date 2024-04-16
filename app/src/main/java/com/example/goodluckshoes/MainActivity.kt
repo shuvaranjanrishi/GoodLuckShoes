@@ -3,9 +3,13 @@ package com.example.goodluckshoes
 import android.annotation.SuppressLint
 import android.app.DatePickerDialog
 import android.content.Intent
+import android.graphics.pdf.PdfDocument
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.util.DisplayMetrics
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.TableLayout
@@ -17,6 +21,10 @@ import androidx.core.content.ContextCompat
 import com.example.goodluckshoes.databinding.ActivityMainBinding
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.io.File
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
+import java.lang.RuntimeException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -51,9 +59,10 @@ class MainActivity : AppCompatActivity() {
         db.closeDB()
 
         binding!!.backupBtn.setOnClickListener {
-            val outFileName = Environment.getExternalStorageDirectory()
-                .toString() + File.separator + resources.getString(R.string.app_name) + File.separator
-            localBackup!!.performBackup(db, outFileName)
+
+//            val outFileName = Environment.getExternalStorageDirectory()
+//                .toString() + File.separator + resources.getString(R.string.app_name) + File.separator
+//            localBackup!!.performBackup(db, outFileName)
         }
         binding!!.viewAllBtn.setOnClickListener {
             startActivity(Intent(this, DayListActivity::class.java))
