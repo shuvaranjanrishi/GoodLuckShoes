@@ -1,5 +1,6 @@
 package com.example.goodluckshoes
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,7 +19,6 @@ class MainListAdapter(private val mList: List<ItemModel>) :
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 
         val ItemsViewModel = mList[position]
-
         holder.dateTv.text = ItemsViewModel.date
         holder.text1.text = ItemsViewModel.text1
         holder.text2.text = ItemsViewModel.text2
@@ -26,12 +26,10 @@ class MainListAdapter(private val mList: List<ItemModel>) :
         holder.text4.text = ItemsViewModel.text4
     }
 
-    // return the number of the items in the list
     override fun getItemCount(): Int {
         return mList.size
     }
 
-    // Holds the views for adding it to image and text
     class ViewHolder(ItemView: View) : RecyclerView.ViewHolder(ItemView) {
         val dateTv: TextView = itemView.findViewById(R.id.dateTv)
         val text1: TextView = itemView.findViewById(R.id.text1)

@@ -1,8 +1,10 @@
 package com.example.goodluckshoes
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.DatePickerDialog
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.pdf.PdfDocument
 import android.os.Build
 import android.os.Bundle
@@ -17,7 +19,9 @@ import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
 import com.example.goodluckshoes.databinding.ActivityMainBinding
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.io.File
@@ -32,15 +36,14 @@ import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
+    private val TAG = "MainActivity"
+
     var binding: ActivityMainBinding? = null
 
     private val calendar = Calendar.getInstance()
-    var amount1 = "0"
-    var amount2 = "0"
-    var amount3 = "0"
-    var amount4 = "0"
-
-    var adapter: MainListAdapter? = null
+    private lateinit var adapter: MainListAdapter
+    private lateinit var viewModel: MainViewModel
+    private lateinit var db: DbHelper
 
     private var localBackup: LocalBackup? = null
 
@@ -52,14 +55,70 @@ class MainActivity : AppCompatActivity() {
 
         setTodayDate()
 
-        localBackup = LocalBackup(this);
+        localBackup = LocalBackup(this)
+        db = DbHelper(this, null)
+        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
-        val  db  = DbHelper(this,null);
-//        setupUI(db)
-        db.closeDB()
+        viewModel.data.observe(this) {
+
+            var total1 = "0"
+            var total2 = "0"
+            var total3 = "0"
+            var total4 = "0"
+
+            Log.d(TAG, "Data Size: ${it.size}")
+            adapter = MainListAdapter(it)
+            binding!!.recyclerView.adapter = adapter
+
+            for (item in it) {
+                total1 = (total1.toDouble() + item.text1.toDouble()).toString()
+                total2 = (total2.toDouble() + item.text2.toDouble()).toString()
+                total3 = (total3.toDouble() + item.text3.toDouble()).toString()
+                total4 = (total4.toDouble() + item.text4.toDouble()).toString()
+            }
+
+            binding!!.totalTv.text = "মোট\n(" + it.size.toString() + ")"
+            binding!!.total1.text = total1
+            binding!!.total2.text = total2
+            binding!!.total3.text = total3
+            binding!!.total4.text = total4
+        }
+
+        viewModel.getData(db)
 
         binding!!.backupBtn.setOnClickListener {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ) == (PackageManager.PERMISSION_GRANTED)
+            ) {
+                db.performFullBackup(this)
+            } else {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                    100
+                )
+            }
 
+//            val outFileName = Environment.getExternalStorageDirectory()
+//                .toString() + File.separator + resources.getString(R.string.app_name) + File.separator
+//            localBackup!!.performBackup(db, outFileName)
+        }
+        binding!!.restoreBtn.setOnClickListener {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ) == (PackageManager.PERMISSION_GRANTED)
+            ) {
+                db.performFullRestore(this)
+            } else {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                    100
+                )
+            }
 //            val outFileName = Environment.getExternalStorageDirectory()
 //                .toString() + File.separator + resources.getString(R.string.app_name) + File.separator
 //            localBackup!!.performBackup(db, outFileName)
@@ -74,10 +133,14 @@ class MainActivity : AppCompatActivity() {
         binding!!.saveBtn.setOnClickListener {
 
             val date: String = binding!!.dateEt.text.toString()
-            val str1: String = binding!!.et2.text.toString() + "0"
-            val str2: String = binding!!.et3.text.toString() + "0"
-            val str3: String = binding!!.et4.text.toString() + "0"
-            val str4: String = binding!!.et5.text.toString() + "0"
+            val str1: String =
+                if (binding!!.et2.text.toString() == "") "0" else binding!!.et2.text.toString()
+            val str2: String =
+                if (binding!!.et3.text.toString() == "") "0" else binding!!.et3.text.toString()
+            val str3: String =
+                if (binding!!.et4.text.toString() == "") "0" else binding!!.et4.text.toString()
+            val str4: String =
+                if (binding!!.et5.text.toString() == "") "0" else binding!!.et5.text.toString()
 
             if (date.isEmpty()) {
                 Toast.makeText(this@MainActivity, "Please enter Income Date", Toast.LENGTH_SHORT)
@@ -86,10 +149,6 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this@MainActivity, "Please enter Amount", Toast.LENGTH_SHORT)
                     .show()
             } else {
-
-                val db = DbHelper(this, null)
-
-//                val createdAt = "" + System.currentTimeMillis()
 
                 val selectedDate = Calendar.getInstance()
                 selectedDate.timeInMillis = System.currentTimeMillis()
@@ -104,234 +163,16 @@ class MainActivity : AppCompatActivity() {
                     "" + str4,
                     "" + createdAt,
                 )
-                adapter!!.notifyDataSetChanged()
-                Toast.makeText(this, "$date added to database", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Data added to database", Toast.LENGTH_LONG).show()
             }
         }
 
     }
 
-//    fun setupUI(db: DbHelper) {
-//        val fab = findViewById<FloatingActionButton>(R.id.fab)
-//        fab.setOnClickListener { v: View? -> showMultichoice() }
-//
-//        //button that shows student, exam and clears the view
-//        val showStud = findViewById<Button>(R.id.button)
-//        val showExam = findViewById<Button>(R.id.button2)
-//        val clear = findViewById<Button>(R.id.button3)
-//        showStud.setOnClickListener { v: View? ->
-//            val students: ArrayList<Student> = db.getAllStudent()
-//            val table = findViewById<TableLayout>(R.id.table)
-//            //table customization
-//            val layoutParamsT =
-//                TableLayout.LayoutParams(
-//                    TableLayout.LayoutParams.MATCH_PARENT,
-//                    TableLayout.LayoutParams.WRAP_CONTENT
-//                )
-//            layoutParamsT.setMargins(30, 20, 40, 0)
-//            table.removeAllViews()
-//            val row = TableRow(applicationContext)
-//            val rLayoutParamsTR =
-//                TableRow.LayoutParams(
-//                    TableRow.LayoutParams.MATCH_PARENT,
-//                    TableRow.LayoutParams.WRAP_CONTENT
-//                )
-//            rLayoutParamsTR.setMargins(30, 20, 40, 0)
-//            row.removeAllViews()
-//
-//            //row population
-//            val tvIdTitle = TextView(applicationContext)
-//            val tvNameTitle = TextView(applicationContext)
-//            val tvSurnameTitle =
-//                TextView(applicationContext)
-//            val tvDateTItle = TextView(applicationContext)
-//            tvIdTitle.text = "ID"
-//            tvIdTitle.textSize = 20f
-//            tvIdTitle.setTextColor(ContextCompat.getColor(applicationContext, R.color.black))
-//            tvNameTitle.text = "Name"
-//            tvNameTitle.setTextColor(ContextCompat.getColor(applicationContext, R.color.black))
-//            tvNameTitle.textSize = 20f
-//            tvSurnameTitle.text = "Surname"
-//            tvSurnameTitle.setTextColor(ContextCompat.getColor(applicationContext, R.color.black))
-//            tvSurnameTitle.textSize = 20f
-//            tvDateTItle.text = "Birth"
-//            tvDateTItle.setTextColor(ContextCompat.getColor(applicationContext, R.color.black))
-//            tvDateTItle.textSize = 20f
-//            row.addView(tvIdTitle, rLayoutParamsTR)
-//            row.addView(tvNameTitle, rLayoutParamsTR)
-//            row.addView(tvSurnameTitle, rLayoutParamsTR)
-//            row.addView(tvDateTItle, rLayoutParamsTR)
-//            table.addView(row, layoutParamsT)
-//            for (stud in students) {
-//                val rowEl = TableRow(applicationContext)
-//                //table customization
-//                val layoutParams =
-//                    TableLayout.LayoutParams(
-//                        TableLayout.LayoutParams.MATCH_PARENT,
-//                        TableLayout.LayoutParams.WRAP_CONTENT
-//                    )
-//                layoutParams.setMargins(30, 20, 40, 20)
-//                val rLayoutParams =
-//                    TableRow.LayoutParams(
-//                        TableRow.LayoutParams.MATCH_PARENT,
-//                        TableRow.LayoutParams.WRAP_CONTENT
-//                    )
-//                rLayoutParams.setMargins(30, 20, 40, 0)
-//
-//                //table population
-//                val id: Int = stud.getId()
-//                val name: String = stud.getName()
-//                val surname: String = stud.getSurname()
-//                val millis: Long = stud.getBorn()
-//                val tvId = TextView(applicationContext)
-//                val tvName = TextView(applicationContext)
-//                val tvSurname =
-//                    TextView(applicationContext)
-//                val tvDate = TextView(applicationContext)
-//                val formatter = SimpleDateFormat("dd/MM/yyyy")
-//                val dateString = formatter.format(Date(millis))
-//                tvId.text = id.toString()
-//                tvId.setTextColor(ContextCompat.getColor(applicationContext, R.color.black))
-//                tvName.text = name
-//                tvName.setTextColor(ContextCompat.getColor(applicationContext, R.color.black))
-//                tvSurname.text = surname
-//                tvSurname.setTextColor(ContextCompat.getColor(applicationContext, R.color.black))
-//                tvDate.text = dateString
-//                tvDate.setTextColor(ContextCompat.getColor(applicationContext, R.color.black))
-//                rowEl.addView(tvId, rLayoutParams)
-//                rowEl.addView(tvName, rLayoutParams)
-//                rowEl.addView(tvSurname, rLayoutParams)
-//                rowEl.addView(tvDate, rLayoutParams)
-//                table.addView(rowEl, layoutParams)
-//            }
-//        }
-//        showExam.setOnClickListener { v: View? ->
-//            val exams: ArrayList<Exam> = db.getAllExam()
-//            val table =
-//                findViewById<TableLayout>(R.id.table)
-//            //table customization
-//            val layoutParamsT =
-//                TableLayout.LayoutParams(
-//                    TableLayout.LayoutParams.MATCH_PARENT,
-//                    TableLayout.LayoutParams.WRAP_CONTENT
-//                )
-//            layoutParamsT.setMargins(30, 20, 40, 0)
-//            val rLayoutParamsTR =
-//                TableRow.LayoutParams(
-//                    TableRow.LayoutParams.MATCH_PARENT,
-//                    TableRow.LayoutParams.WRAP_CONTENT
-//                )
-//            rLayoutParamsTR.setMargins(30, 20, 40, 0)
-//            table.removeAllViews()
-//            val row = TableRow(applicationContext)
-//            row.removeAllViews()
-//
-//            //table population
-//            val tvIdTitle =
-//                TextView(applicationContext)
-//            tvIdTitle.textSize = 20f
-//            tvIdTitle.setTextColor(
-//                ContextCompat.getColor(
-//                    applicationContext,
-//                    R.color.black
-//                )
-//            )
-//            val tvNameTitle =
-//                TextView(applicationContext)
-//            tvNameTitle.textSize = 20f
-//            tvNameTitle.setTextColor(
-//                ContextCompat.getColor(
-//                    applicationContext,
-//                    R.color.black
-//                )
-//            )
-//            val tvSurnameTitle =
-//                TextView(applicationContext)
-//            tvSurnameTitle.textSize = 20f
-//            tvSurnameTitle.setTextColor(
-//                ContextCompat.getColor(
-//                    applicationContext,
-//                    R.color.black
-//                )
-//            )
-//            tvIdTitle.text = "Exam ID"
-//            tvNameTitle.text = "Student ID"
-//            tvSurnameTitle.text = "Mark"
-//            row.addView(tvIdTitle, rLayoutParamsTR)
-//            row.addView(tvNameTitle, rLayoutParamsTR)
-//            row.addView(tvSurnameTitle, rLayoutParamsTR)
-//            table.addView(row, layoutParamsT)
-//            for (e in exams) {
-//                val rowEl =
-//                    TableRow(applicationContext)
-//
-//                //table customization
-//                val layoutParams =
-//                    TableLayout.LayoutParams(
-//                        TableLayout.LayoutParams.MATCH_PARENT,
-//                        TableLayout.LayoutParams.WRAP_CONTENT
-//                    )
-//                layoutParams.setMargins(30, 20, 40, 20)
-//                val rLayoutParams =
-//                    TableRow.LayoutParams(
-//                        TableRow.LayoutParams.MATCH_PARENT,
-//                        TableRow.LayoutParams.WRAP_CONTENT
-//                    )
-//                rLayoutParams.setMargins(30, 20, 40, 0)
-//
-//                //table population
-//                val id: Int = e.getId()
-//                val stud: Int = e.getStudent()
-//                val eval: Int = e.getEvaluation()
-//                val tvId =
-//                    TextView(applicationContext)
-//                val tvName =
-//                    TextView(applicationContext)
-//                val tvSurname =
-//                    TextView(applicationContext)
-//                tvId.text = id.toString()
-//                tvId.setTextColor(
-//                    ContextCompat.getColor(
-//                        applicationContext,
-//                        R.color.black
-//                    )
-//                )
-//                tvName.text = stud.toString()
-//                tvName.setTextColor(
-//                    ContextCompat.getColor(
-//                        applicationContext,
-//                        R.color.black
-//                    )
-//                )
-//                tvSurname.text = eval.toString()
-//                tvSurname.setTextColor(
-//                    ContextCompat.getColor(
-//                        applicationContext,
-//                        R.color.black
-//                    )
-//                )
-//                rowEl.addView(tvId, rLayoutParams)
-//                rowEl.addView(tvName, rLayoutParams)
-//                rowEl.addView(tvSurname, rLayoutParams)
-//                table.addView(rowEl, layoutParams)
-//            }
-//        }
-//        clear.setOnClickListener { v: View? ->
-//            val table =
-//                findViewById<TableLayout>(R.id.table)
-//            table.removeAllViews()
-//        }
-//    }
-
     private fun setTodayDate() {
         val selectedDate = Calendar.getInstance()
         val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-        binding!!.todayDateTv.text = ""+dateFormat.format(selectedDate.time)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        populateRecyclerView()
+        binding!!.todayDateTv.text = "" + dateFormat.format(selectedDate.time)
     }
 
     @SuppressLint("Range")
@@ -360,8 +201,8 @@ class MainActivity : AppCompatActivity() {
             } while (cursor.moveToNext());
         }
 
-        adapter = MainListAdapter(data)
-        binding!!.recyclerView.adapter = adapter
+//        adapter = MainListAdapter(data)
+//        binding!!.recyclerView.adapter = adapter
 
         for (item in data) {
             total1 = (total1.toDouble() + item.text1.toDouble()).toString()

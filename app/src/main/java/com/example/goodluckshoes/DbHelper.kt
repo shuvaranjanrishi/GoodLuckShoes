@@ -5,12 +5,15 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.os.Environment
 import android.util.Log
 import android.widget.Toast
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
 import java.io.OutputStream
+import java.nio.channels.FileChannel
 
 
 class DbHelper(private val context: Context, factory: SQLiteDatabase.CursorFactory?) :
@@ -150,8 +153,73 @@ class DbHelper(private val context: Context, factory: SQLiteDatabase.CursorFacto
             fis.close()
             Toast.makeText(context, "Import Completed", Toast.LENGTH_LONG).show()
         } catch (e: java.lang.Exception) {
-            Toast.makeText(context,  "Unable to import database. Retry", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Unable to import database. Retry", Toast.LENGTH_LONG).show()
             e.printStackTrace()
         }
+    }
+
+    fun performFullBackup(context: Context) {
+        try {
+            val originalDbFile: File = context.getDatabasePath(DATABASE_NAME)
+            val backupFilePath =
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS+"/SQLiteBackup").toString()
+            val backupDir = File(backupFilePath)
+            if (!backupDir.exists()) {
+                backupDir.mkdirs()
+            }
+            val backupFileName = "ListData.db"
+            val backupDbFile = File(backupDir, backupFileName)
+            if (backupDbFile.exists()) {
+                backupDbFile.delete()
+            }
+
+            if (originalDbFile.exists()) {
+                val src: FileChannel = FileInputStream(originalDbFile).channel
+                val dst: FileChannel = FileInputStream(backupDbFile).channel
+
+                dst.transferFrom(src, 0, src.size())
+                src.close()
+                dst.close()
+                Toast.makeText(context, "Backup Successful...", Toast.LENGTH_LONG).show()
+            }
+            else {
+                Toast.makeText(context, "Original Database File not Found...", Toast.LENGTH_LONG).show()
+            }
+
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Toast.makeText(context, "Error: "+e.message, Toast.LENGTH_LONG).show()
+        }
+
+    }
+
+    fun performFullRestore(context: Context) {
+        try {
+            val backupFilePath =
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS+"/SQLiteBackup").toString()
+            val backupDir = File(backupFilePath)
+            val backupFileName = "ListData.db"
+            val backupDbFile = File(backupDir, backupFileName)
+
+            if (backupDbFile.exists()) {
+                val originalDbFile: File = context.getDatabasePath(DATABASE_NAME)
+
+                val src: FileChannel = FileInputStream(backupDbFile).channel
+                val dst: FileChannel = FileInputStream(originalDbFile).channel
+
+                dst.transferFrom(src, 0, src.size())
+                src.close()
+                dst.close()
+                Toast.makeText(context, "Restore Successful...", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(context, "Backup File not Found...", Toast.LENGTH_LONG).show()
+            }
+
+
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Toast.makeText(context, "Error: "+e.message, Toast.LENGTH_LONG).show()
+        }
+
     }
 }

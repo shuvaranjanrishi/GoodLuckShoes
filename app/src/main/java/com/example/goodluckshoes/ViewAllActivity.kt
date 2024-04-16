@@ -109,7 +109,7 @@ class ViewAllActivity : AppCompatActivity() {
         val width: Int = view.measuredWidth
         val height: Int = view.measuredHeight
 
-        val pageInfo: PdfDocument.PageInfo = PdfDocument.PageInfo.Builder(width, height, 1).create()
+        val pageInfo: PdfDocument.PageInfo = PdfDocument.PageInfo.Builder(binding!!.recyclerView.width, binding!!.recyclerView.height, 1).create()
         val page: PdfDocument.Page = pdfDocument.startPage(pageInfo)
 
         //canvas
