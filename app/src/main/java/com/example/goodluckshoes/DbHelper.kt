@@ -56,12 +56,25 @@ class DbHelper(private val context: Context, factory: SQLiteDatabase.CursorFacto
         db.close()
     }
 
-//    fun getExpense(): Cursor? {
-//        val db = this.readableDatabase
-//        val selection = "${FeedEntry.COLUMN_NAME_TITLE} LIKE ?"
-//        val selectionArgs = arrayOf("MyTitle")
-//        val deletedRows = db.delete(FeedEntry.TABLE_NAME, selection, selectionArgs)
-//    }
+    fun updateExpense(
+        id: String,
+        amount1: String,
+        amount2: String,
+        amount3: String,
+        amount4: String,
+        createdAt: String
+    ) {
+        val values = ContentValues()
+        values.put(AMOUNT1_COl, amount1)
+        values.put(AMOUNT2_COl, amount2)
+        values.put(AMOUNT3_COl, amount3)
+        values.put(AMOUNT4_COl, amount4)
+        values.put(CREATED_DATE_COL, createdAt)
+
+        val db = this.writableDatabase
+        db.update(TABLE_NAME, values, "$ID_COL=?", arrayOf(id))
+        db.close()
+    }
 
     fun getExpense(): Cursor? {
         val db = this.readableDatabase
@@ -70,7 +83,10 @@ class DbHelper(private val context: Context, factory: SQLiteDatabase.CursorFacto
 
     fun getExpenseByDate(date: String): Cursor? {
         val db = this.readableDatabase
-        return db.rawQuery("SELECT * FROM $TABLE_NAME WHERE $CREATED_DATE_COL  = ? ORDER BY $DATE_COl DESC", arrayOf(date))
+        return db.rawQuery(
+            "SELECT * FROM $TABLE_NAME WHERE $CREATED_DATE_COL  = ? ORDER BY $DATE_COl DESC",
+            arrayOf(date)
+        )
     }
 
     fun getDayList(): Cursor? {
@@ -97,13 +113,6 @@ class DbHelper(private val context: Context, factory: SQLiteDatabase.CursorFacto
         val AMOUNT3_COl = "amount3"
         val AMOUNT4_COl = "amount4"
         val CREATED_DATE_COL = "create_at"
-    }
-
-    //close database
-    fun closeDB() {
-        val db = this.readableDatabase
-        if (db != null && db.isOpen)
-            db.close()
     }
 
     fun backup(outFileName: String?) {

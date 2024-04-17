@@ -144,10 +144,18 @@ class MainActivity : AppCompatActivity() {
                 if (binding!!.et5.text.toString() == "") "0" else binding!!.et5.text.toString()
 
             if (date.isEmpty()) {
-                Toast.makeText(this@MainActivity, "Please enter Income Date", Toast.LENGTH_SHORT)
+                Toast.makeText(
+                    this@MainActivity,
+                    "" + resources.getString(R.string.enter_expense_date),
+                    Toast.LENGTH_SHORT
+                )
                     .show()
             } else if (str1 == "0" && str2 == "0" && str3 == "0" && str4 == "0") {
-                Toast.makeText(this@MainActivity, "Please enter Amount", Toast.LENGTH_SHORT)
+                Toast.makeText(
+                    this@MainActivity,
+                    "" + resources.getString(R.string.enter_amount),
+                    Toast.LENGTH_SHORT
+                )
                     .show()
             } else {
 
@@ -164,10 +172,22 @@ class MainActivity : AppCompatActivity() {
                     "" + str4,
                     "" + createdAt,
                 )
-                Toast.makeText(this, "Data added to database", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this,
+                    "" + resources.getString(R.string.data_saved),
+                    Toast.LENGTH_LONG
+                ).show()
+                clearFields()
             }
         }
 
+    }
+
+    private fun clearFields() {
+        binding!!.et2.setText("")
+        binding!!.et3.setText("")
+        binding!!.et4.setText("")
+        binding!!.et5.setText("")
     }
 
     private fun setTodayDate() {

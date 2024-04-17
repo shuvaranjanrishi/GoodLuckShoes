@@ -9,4 +9,9 @@
     <string name="johorlal">জহরলাল</string>
     <string name="nitai">নিতাই</string>
     <string name="asit">অসিত</string>
+    <string name="change_data">তথ্য পরিবর্তন করুন</string>
+    <string name="enter_amount">টাকার অংক লিখুন</string>
+    <string name="update_done">তথ্য আপডেট হয়েছে</string>
+    <string name="enter_expense_date">ব্যয়ের তারিখ দিন</string>
+    <string name="data_saved">তথ্য সেভ হয়েছে</string>
 </resources>
