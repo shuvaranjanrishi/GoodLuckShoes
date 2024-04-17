@@ -44,15 +44,14 @@
 
         <ImageView
             android:id="@+id/backupBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_centerVertical="true"
             android:layout_marginEnd="10dp"
             android:padding="5dp"
-            android:src="@drawable/baseline_settings_backup_restore_24"
+            android:src="@drawable/logo1"
             android:textSize="16sp"
-            android:textStyle="bold"
-            app:tint="@color/white" />
+            android:textStyle="bold"/>
         <ImageView
             android:id="@+id/restoreBtn"
             android:layout_width="wrap_content"
