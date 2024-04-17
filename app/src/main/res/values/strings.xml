@@ -2,6 +2,11 @@
     <string name="app_name">GoodLuckShoes</string>
     <string name="create_date">তৈরীর তারিখ</string>
     <string name="income_date">আয়ের তারিখ</string>
+    <string name="expense_date">ব্যয়ের তারিখ</string>
     <string name="edition">সম্পাদন</string>
     <string name="today_accounts">আজকের হিসাব</string>
+    <string name="radhika">রাধিকা</string>
+    <string name="johorlal">জহরলাল</string>
+    <string name="nitai">নিতাই</string>
+    <string name="asit">অসিত</string>
 </resources>

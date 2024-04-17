@@ -6,7 +6,6 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.os.Environment
-import android.util.Log
 import android.widget.Toast
 import java.io.File
 import java.io.FileInputStream
@@ -66,12 +65,12 @@ class DbHelper(private val context: Context, factory: SQLiteDatabase.CursorFacto
 
     fun getExpense(): Cursor? {
         val db = this.readableDatabase
-        return db.rawQuery("SELECT * FROM $TABLE_NAME ORDER BY $DATE_COl", null)
+        return db.rawQuery("SELECT * FROM $TABLE_NAME ORDER BY $DATE_COl DESC", null)
     }
 
     fun getExpenseByDate(date: String): Cursor? {
         val db = this.readableDatabase
-        return db.rawQuery("SELECT * FROM $TABLE_NAME WHERE $CREATED_DATE_COL  = ?", arrayOf(date))
+        return db.rawQuery("SELECT * FROM $TABLE_NAME WHERE $CREATED_DATE_COL  = ? ORDER BY $DATE_COl DESC", arrayOf(date))
     }
 
     fun getDayList(): Cursor? {
@@ -80,6 +79,11 @@ class DbHelper(private val context: Context, factory: SQLiteDatabase.CursorFacto
             "SELECT DISTINCT $CREATED_DATE_COL FROM $TABLE_NAME ORDER BY $CREATED_DATE_COL",
             null
         )
+    }
+
+    fun deleteExpense(id: String): Int {
+        val db = this.readableDatabase
+        return db.delete(TABLE_NAME, "$ID_COL=$id", null)
     }
 
     companion object {
@@ -162,7 +166,8 @@ class DbHelper(private val context: Context, factory: SQLiteDatabase.CursorFacto
         try {
             val originalDbFile: File = context.getDatabasePath(DATABASE_NAME)
             val backupFilePath =
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS+"/SQLiteBackup").toString()
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/SQLiteBackup")
+                    .toString()
             val backupDir = File(backupFilePath)
             if (!backupDir.exists()) {
                 backupDir.mkdirs()
@@ -181,14 +186,14 @@ class DbHelper(private val context: Context, factory: SQLiteDatabase.CursorFacto
                 src.close()
                 dst.close()
                 Toast.makeText(context, "Backup Successful...", Toast.LENGTH_LONG).show()
-            }
-            else {
-                Toast.makeText(context, "Original Database File not Found...", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(context, "Original Database File not Found...", Toast.LENGTH_LONG)
+                    .show()
             }
 
         } catch (e: IOException) {
             e.printStackTrace()
-            Toast.makeText(context, "Error: "+e.message, Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Error: " + e.message, Toast.LENGTH_LONG).show()
         }
 
     }
@@ -196,7 +201,8 @@ class DbHelper(private val context: Context, factory: SQLiteDatabase.CursorFacto
     fun performFullRestore(context: Context) {
         try {
             val backupFilePath =
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS+"/SQLiteBackup").toString()
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/SQLiteBackup")
+                    .toString()
             val backupDir = File(backupFilePath)
             val backupFileName = "ListData.db"
             val backupDbFile = File(backupDir, backupFileName)
@@ -218,7 +224,7 @@ class DbHelper(private val context: Context, factory: SQLiteDatabase.CursorFacto
 
         } catch (e: IOException) {
             e.printStackTrace()
-            Toast.makeText(context, "Error: "+e.message, Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Error: " + e.message, Toast.LENGTH_LONG).show()
         }
 
     }

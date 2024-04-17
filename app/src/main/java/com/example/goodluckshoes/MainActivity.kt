@@ -67,8 +67,9 @@ class MainActivity : AppCompatActivity() {
             var total4 = "0"
 
             Log.d(TAG, "Data Size: ${it.size}")
-            adapter = MainListAdapter(it)
+            adapter = MainListAdapter(this, it)
             binding!!.recyclerView.adapter = adapter
+            adapter.notifyDataSetChanged()
 
             for (item in it) {
                 total1 = (total1.toDouble() + item.text1.toDouble()).toString()
@@ -175,58 +176,12 @@ class MainActivity : AppCompatActivity() {
         binding!!.todayDateTv.text = "" + dateFormat.format(selectedDate.time)
     }
 
-    @SuppressLint("Range")
-    private fun populateRecyclerView() {
-
-        var total1 = "0"
-        var total2 = "0"
-        var total3 = "0"
-        var total4 = "0"
-
-        val db = DbHelper(this, null)
-        val cursor = db.getExpense()!!
-
-        val data = ArrayList<ItemModel>()
-        if (cursor.moveToFirst()) {
-            do {
-                val date = cursor.getString(cursor.getColumnIndex(DbHelper.DATE_COl))
-                val amount1 = cursor.getString(cursor.getColumnIndex(DbHelper.AMOUNT1_COl))
-                val amount2 = cursor.getString(cursor.getColumnIndex(DbHelper.AMOUNT2_COl))
-                val amount3 = cursor.getString(cursor.getColumnIndex(DbHelper.AMOUNT3_COl))
-                val amount4 = cursor.getString(cursor.getColumnIndex(DbHelper.AMOUNT4_COl))
-                val createdAt = cursor.getString(cursor.getColumnIndex(DbHelper.CREATED_DATE_COL))
-
-                data.add(ItemModel(date, amount1, amount2, amount3, amount4))
-                Log.d("TAG", "List: $data")
-            } while (cursor.moveToNext());
-        }
-
-//        adapter = MainListAdapter(data)
-//        binding!!.recyclerView.adapter = adapter
-
-        for (item in data) {
-            total1 = (total1.toDouble() + item.text1.toDouble()).toString()
-            total2 = (total2.toDouble() + item.text2.toDouble()).toString()
-            total3 = (total3.toDouble() + item.text3.toDouble()).toString()
-            total4 = (total4.toDouble() + item.text4.toDouble()).toString()
-        }
-
-        binding!!.totalTv.text = "মোট\n(" + data.size.toString() + ")"
-        binding!!.total1.text = total1
-        binding!!.total2.text = total2
-        binding!!.total3.text = total3
-        binding!!.total4.text = total4
-
-        cursor.close()
-    }
-
     private fun showDatePicker() {
         val datePickerDialog = DatePickerDialog(
             this, { DatePicker, year: Int, monthOfYear: Int, dayOfMonth: Int ->
-                val selectedDate = Calendar.getInstance()
-                selectedDate.set(year, monthOfYear, dayOfMonth)
+                calendar.set(year, monthOfYear, dayOfMonth)
                 val dateFormat = SimpleDateFormat("dd-MM-yy", Locale.getDefault())
-                val formattedDate = dateFormat.format(selectedDate.time)
+                val formattedDate = dateFormat.format(calendar.time)
                 binding!!.dateEt.setText("$formattedDate")
             },
             calendar.get(Calendar.YEAR),

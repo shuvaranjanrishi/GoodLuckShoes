@@ -10,7 +10,7 @@ import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
 import android.widget.Toast
-import com.example.goodluckshoes.databinding.ActivityMainBinding
+import androidx.lifecycle.ViewModelProvider
 import com.example.goodluckshoes.databinding.ActivityViewAllBinding
 import java.io.File
 import java.io.FileNotFoundException
@@ -25,11 +25,13 @@ class ViewAllActivity : AppCompatActivity() {
 
     var binding: ActivityViewAllBinding? = null
 
-    var total1 = "0"
-    var total2 = "0"
-    var total3 = "0"
-    var total4 = "0"
     var date: String = ""
+
+    private lateinit var adapter: ListViewAdapter
+    private lateinit var viewModel: MainViewModel
+    private lateinit var db: DbHelper
+
+    private var localBackup: LocalBackup? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,56 +42,44 @@ class ViewAllActivity : AppCompatActivity() {
         if (intent != null) {
             if (!intent.extras!!.isEmpty) {
                 date = intent.getStringExtra("DATE").toString()
+                binding!!.createDateTv.text = date
             }
         }
 
         binding!!.pdfBtn.setOnClickListener {
             convertXmlToPdf()
         }
-    }
 
-    override fun onResume() {
-        super.onResume()
-        populateRecyclerView()
-    }
+//        localBackup = LocalBackup(this)
+        db = DbHelper(this, null)
+        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
-    @SuppressLint("Range", "SetTextI18n")
-    private fun populateRecyclerView() {
-        val db = DbHelper(this, null)
-        val cursor = db.getExpenseByDate(date)!!
-        Log.d("TAG", "cursor ${cursor.count}")
+        viewModel.data.observe(this) {
 
-        val data = ArrayList<ItemModel>()
+            var total1 = "0"
+            var total2 = "0"
+            var total3 = "0"
+            var total4 = "0"
 
-        while (cursor.moveToNext()) {
-            val date = cursor.getString(cursor.getColumnIndex(DbHelper.DATE_COl))
-            val amount1 = cursor.getString(cursor.getColumnIndex(DbHelper.AMOUNT1_COl))
-            val amount2 = cursor.getString(cursor.getColumnIndex(DbHelper.AMOUNT2_COl))
-            val amount3 = cursor.getString(cursor.getColumnIndex(DbHelper.AMOUNT3_COl))
-            val amount4 = cursor.getString(cursor.getColumnIndex(DbHelper.AMOUNT4_COl))
-            val createdAt = cursor.getString(cursor.getColumnIndex(DbHelper.CREATED_DATE_COL))
+            Log.d(TAG, "Data Size: ${it.size}")
+            adapter = ListViewAdapter(it)
+            binding!!.recyclerView.adapter = adapter
 
-            data.add(ItemModel(date, amount1, amount2, amount3, amount4, createdAt))
-            Log.d("TAG", "List: $data")
-        }
-        val adapter = ListViewAdapter(data)
-        binding!!.recyclerView.adapter = adapter
+            for (item in it) {
+                total1 = (total1.toDouble() + item.text1.toDouble()).toString()
+                total2 = (total2.toDouble() + item.text2.toDouble()).toString()
+                total3 = (total3.toDouble() + item.text3.toDouble()).toString()
+                total4 = (total4.toDouble() + item.text4.toDouble()).toString()
+            }
 
-        for (item in data) {
-            total1 = (total1.toDouble() + item.text1.toDouble()).toString()
-            total2 = (total2.toDouble() + item.text2.toDouble()).toString()
-            total3 = (total3.toDouble() + item.text3.toDouble()).toString()
-            total4 = (total4.toDouble() + item.text4.toDouble()).toString()
+            binding!!.totalTv.text = "মোট\n(" + it.size.toString() + ")"
+            binding!!.total1.text = total1
+            binding!!.total2.text = total2
+            binding!!.total3.text = total3
+            binding!!.total4.text = total4
         }
 
-        binding!!.createDateTv.text = "($date)"
-        binding!!.totalTv.text = "মোট\n(" + data.size.toString() + ")"
-        binding!!.total1.text = total1
-        binding!!.total2.text = total2
-        binding!!.total3.text = total3
-        binding!!.total4.text = total4
-
-        cursor.close()
+        viewModel.getDataByDate(db, date)
     }
 
     @SuppressLint("ResourceType")
@@ -109,7 +99,11 @@ class ViewAllActivity : AppCompatActivity() {
         val width: Int = view.measuredWidth
         val height: Int = view.measuredHeight
 
-        val pageInfo: PdfDocument.PageInfo = PdfDocument.PageInfo.Builder(binding!!.recyclerView.width, binding!!.recyclerView.height, 1).create()
+        val pageInfo: PdfDocument.PageInfo = PdfDocument.PageInfo.Builder(
+            binding!!.recyclerView.width,
+            binding!!.recyclerView.height,
+            1
+        ).create()
         val page: PdfDocument.Page = pdfDocument.startPage(pageInfo)
 
         //canvas
@@ -122,11 +116,11 @@ class ViewAllActivity : AppCompatActivity() {
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
         val fileName = "$date.pdf"
         val folder = File(downloadDir, "Good Luck Shoes")
-        if(!folder.exists()){
+        if (!folder.exists()) {
             folder.mkdir()
         }
         val file = File(folder, fileName)
-        if(file.exists()){
+        if (file.exists()) {
             file.delete()
         }
         try {

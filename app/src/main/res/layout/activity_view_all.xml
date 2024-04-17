@@ -76,7 +76,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:padding="3dp"
-                android:text="@string/income_date"
+                android:text="@string/expense_date"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -85,7 +85,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:padding="3dp"
-                android:text="Name1"
+                android:text="@string/radhika"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -94,7 +94,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:padding="3dp"
-                android:text="Name2"
+                android:text="@string/johorlal"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -103,7 +103,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:padding="3dp"
-                android:text="Name3"
+                android:text="@string/nitai"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -112,7 +112,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:padding="3dp"
-                android:text="Name4"
+                android:text="@string/asit"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -129,8 +129,8 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_above="@+id/totalTr"
+            android:layout_height="match_parent"
+            android:layout_above="@id/totalTr"
             android:layout_below="@id/headerTr"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:listitem="@layout/row_item_day" />
