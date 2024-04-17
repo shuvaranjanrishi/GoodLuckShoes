@@ -1,37 +1,24 @@
 package com.example.goodluckshoes
 
-import android.Manifest
-import android.annotation.SuppressLint
+import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.pdf.PdfDocument
-import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.util.DisplayMetrics
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.widget.Button
-import android.widget.TableLayout
-import android.widget.TableRow
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.example.goodluckshoes.databinding.ActivityMainBinding
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.io.File
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
-import java.io.IOException
-import java.lang.RuntimeException
+import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
@@ -44,8 +31,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: MainListAdapter
     private lateinit var viewModel: MainViewModel
     private lateinit var db: DbHelper
-
-    private var localBackup: LocalBackup? = null
+    private val STORAGE_REQUEST_CODE_EXPORT = 100
+    private val STORAGE_REQUEST_CODE_IMPORT = 200
+    private var dataList = mutableListOf<ItemModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,7 +43,6 @@ class MainActivity : AppCompatActivity() {
 
         setTodayDate()
 
-        localBackup = LocalBackup(this)
         db = DbHelper(this, null)
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
@@ -67,6 +54,7 @@ class MainActivity : AppCompatActivity() {
             var total4 = "0"
 
             Log.d(TAG, "Data Size: ${it.size}")
+            dataList = it
             adapter = MainListAdapter(this, it)
             binding!!.recyclerView.adapter = adapter
             adapter.notifyDataSetChanged()
@@ -88,45 +76,25 @@ class MainActivity : AppCompatActivity() {
         viewModel.getData(db)
 
         binding!!.backupBtn.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                ) == (PackageManager.PERMISSION_GRANTED)
-            ) {
-                db.performFullBackup(this)
+            if (checkStoragePermission()) {
+                exportCSV()
             } else {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                    100
-                )
+                requestStoragePermissionExport()
             }
+        }
 
-//            val outFileName = Environment.getExternalStorageDirectory()
-//                .toString() + File.separator + resources.getString(R.string.app_name) + File.separator
-//            localBackup!!.performBackup(db, outFileName)
-        }
         binding!!.restoreBtn.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                ) == (PackageManager.PERMISSION_GRANTED)
-            ) {
-                db.performFullRestore(this)
+            if (checkStoragePermission()) {
+                importCSV()
             } else {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                    100
-                )
+//                requestStoragePermissionImport()
             }
-//            val outFileName = Environment.getExternalStorageDirectory()
-//                .toString() + File.separator + resources.getString(R.string.app_name) + File.separator
-//            localBackup!!.performBackup(db, outFileName)
         }
+
         binding!!.viewAllBtn.setOnClickListener {
             startActivity(Intent(this, DayListActivity::class.java))
         }
+
         binding!!.dateEt.setOnClickListener {
             showDatePicker()
         }
@@ -183,6 +151,30 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    private fun checkStoragePermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            WRITE_EXTERNAL_STORAGE
+        ) == (PackageManager.PERMISSION_GRANTED)
+    }
+
+//    private fun requestStoragePermissionImport() {
+//        ActivityCompat.requestPermissions(
+//            this,
+//            arrayOf(WRITE_EXTERNAL_STORAGE),
+//            STORAGE_REQUEST_CODE_IMPORT
+//        )
+//    }
+
+    private fun requestStoragePermissionExport() {
+
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(WRITE_EXTERNAL_STORAGE),
+            STORAGE_REQUEST_CODE_EXPORT
+        )
+    }
+
     private fun clearFields() {
         binding!!.et2.setText("")
         binding!!.et3.setText("")
@@ -209,5 +201,101 @@ class MainActivity : AppCompatActivity() {
             calendar.get(Calendar.DAY_OF_MONTH)
         )
         datePickerDialog.show()
+    }
+
+    private fun exportCSV() {
+        val folder = File(Environment.getExternalStorageDirectory(), "SQLiteBackup")
+        var isFolderCreated = false
+        if (!folder.exists()) {
+            isFolderCreated = folder.mkdir()
+        }
+
+        val csvFileName = "SQLite_Backup.csv"
+        val csvPathAndName = "$folder/$csvFileName"
+
+        var recordList: MutableList<ItemModel> = mutableListOf()
+        recordList.clear()
+
+        recordList = dataList
+
+        try {
+            val fileWriter = FileWriter(csvPathAndName)
+            for (i in 1..dataList.size) {
+                Log.d(TAG, "asdfasdfasdf: " + recordList[i].id + "     " + recordList[i].text1)
+                fileWriter.append("" + recordList[i].id)
+                fileWriter.append(",")
+                fileWriter.append("" + recordList[i].date)
+                fileWriter.append(",")
+                fileWriter.append("" + recordList[i].text1)
+                fileWriter.append(",")
+                fileWriter.append("" + recordList[i].text2)
+                fileWriter.append(",")
+                fileWriter.append("" + recordList[i].text3)
+                fileWriter.append(",")
+                fileWriter.append("" + recordList[i].text4)
+                fileWriter.append(",")
+                fileWriter.append("" + recordList[i].createDate)
+                fileWriter.append(",")
+
+                fileWriter.flush()
+                fileWriter.close()
+
+                Toast.makeText(
+                    this,
+                    "" + resources.getString(R.string.backup_done) + " " + csvPathAndName,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, "" + e.message, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun importCSV() {
+
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+//        if (requestCode == STORAGE_REQUEST_CODE_EXPORT) {
+//            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                exportCSV()
+//            } else {
+//                Toast.makeText(
+//                    this,
+//                    "" + resources.getString(R.string.storage_permission),
+//                    Toast.LENGTH_LONG
+//                ).show()
+//            }
+//        }
+
+        when (requestCode) {
+            STORAGE_REQUEST_CODE_EXPORT -> if (grantResults.isNotEmpty()) {
+                if (grantResults[0] === PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(applicationContext, "" + resources.getString(R.string.storage_permission), Toast.LENGTH_LONG)
+                        .show()
+                } else {
+                    Toast.makeText(applicationContext, "Permission denied", Toast.LENGTH_LONG)
+                        .show()
+                }
+            }
+        }
+//        if (requestCode == STORAGE_REQUEST_CODE_IMPORT) {
+//            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                importCSV()
+//            } else {
+//                Toast.makeText(
+//                    this,
+//                    "" + resources.getString(R.string.storage_permission),
+//                    Toast.LENGTH_LONG
+//                ).show()
+//            }
+//        }
+
     }
 }

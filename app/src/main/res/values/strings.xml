@@ -14,4 +14,6 @@
     <string name="update_done">তথ্য আপডেট হয়েছে</string>
     <string name="enter_expense_date">ব্যয়ের তারিখ দিন</string>
     <string name="data_saved">তথ্য সেভ হয়েছে</string>
+    <string name="storage_permission">স্টোরেজ পারমিশন দিতে হবে</string>
+    <string name="backup_done">ডাটা ব্যাকআপ হয়েছে</string>
 </resources>
